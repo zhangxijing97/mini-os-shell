@@ -12,6 +12,43 @@ In this project, NASM is used to **assemble the boot sector source code** writte
 
 ## 01-bootsector-barebones
 
+### Boot sector program
+```
+; Infinite loop (e9 fd ff)
+loop:
+    jmp loop
+
+; Fill with 510 zeros minus the size of the previous code
+times 510-($-$$) db 0
+; Magic number
+dw 0xaa55
+```
+
+### Binary of Boot sector program
+```
+e9 fd ff 00 00 00 00 00 00 00 00 00 00 00 00 00
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+[ 29 more lines with sixteen zero-bytes each ]
+00 00 00 00 00 00 00 00 00 00 00 00 00 00 55 aa
+```
+1. **`e9 fd ff`** – Machine code for:
+   ```asm
+   jmp loop
+   ```
+   This is an infinite jump instruction, telling the CPU to loop forever.
+
+2. **`00 ... 00`** – Padding bytes.  
+   BIOS requires the boot sector to be **exactly 512 bytes**.  
+   We use:
+   ```asm
+   times 510-($-$$) db 0
+   ```
+   to fill the unused space with zeros up to byte 510.
+
+3. **`55 aa`** – Boot sector signature (magic number).  
+   The last two bytes of a valid boot sector must be `0x55 0xAA`.  
+   The BIOS checks for this value to confirm the sector is bootable.
+
 ### Assembler
 An **assembler** is a program that converts assembly language (human-readable CPU instructions) into machine code (binary) that the CPU can actually execute.
 
@@ -59,3 +96,6 @@ In `02-bootsector-print`, `int 0x10` triggers a BIOS video service to print a ch
 Registers are tiny super-fast storage inside the CPU. In this lesson:  
 - **AH**: Specifies the function code for BIOS (e.g., `0x0E` means "print character").  
 - **AL**: Holds the character to be printed (e.g., `'H'`).  
+
+## 03-bootsector-print
+
