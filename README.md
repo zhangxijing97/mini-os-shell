@@ -1,6 +1,6 @@
 # mini-os-shell
 
-## Tools Used
+## 00-environment
 
 ### QEMU
 **QEMU** (Quick Emulator) is an open-source machine emulator and virtualizer.  
@@ -10,12 +10,43 @@ In this project, QEMU is used to **simulate a computer** so we can run and test 
 **NASM** (Netwide Assembler) is an assembler for the **x86 architecture**.  
 In this project, NASM is used to **assemble the boot sector source code** written in x86 assembly (`.asm`) into a **raw binary format** (`.bin`) that the BIOS can load and execute.
 
-## Build and Run
+## 01-bootsector-barebones
+
+### Assembler
+An **assembler** is a program that converts assembly language (human-readable CPU instructions) into machine code (binary) that the CPU can actually execute.
+
+**Example:**
+- You write: `mov al, 'H'` (assembly language)
+- The assembler turns it into: `B0 48` (binary bytes in hex)
+- The CPU can read and run those bytes directly.
+
+### BIOS (Basic Input/Output System)
+The **BIOS** is a small program stored in the computer's motherboard.  
+When you power on the computer, the BIOS is the first code that runs. It initializes hardware (keyboard, screen, storage, etc.) and loads the boot sector from the selected boot device into memory, then starts executing it.
+
+**Startup process:**
+1. Check and initialize hardware (keyboard, screen, storage, etc.).
+2. Read the first sector (boot sector) from the boot device into memory.
+3. Pass control to the boot sector code to continue execution.
+
+### Build and Run
 
 ```bash
+# Assemble the boot sector source file (boot_sect.asm) into a raw binary (boot_sect.bin)
+# - /opt/homebrew/bin/nasm : explicitly use Homebrew's NASM assembler (Apple Silicon default path)
+# - -f bin                 : output format is raw binary (no headers, exactly what BIOS loads)
+# - boot_sect.asm          : input assembly source file
+# - -o boot_sect.bin       : output file name for the compiled binary
 /opt/homebrew/bin/nasm -f bin boot_sect.asm -o boot_sect.bin
 ```
 
-```
+```bash
+# Run the compiled boot sector binary in QEMU, emulating a 32-bit x86 PC
+# - qemu-system-i386       : QEMU binary that emulates an i386 (32-bit) machine
+# - -drive file=...        : specifies the disk image file to use
+# - format=raw             : treat the file as a raw binary image
+# - if=floppy              : emulate it as a floppy disk for the BIOS to boot from
 qemu-system-i386 -drive file=boot_sect.bin,format=raw,if=floppy
 ```
+
+### NASM
