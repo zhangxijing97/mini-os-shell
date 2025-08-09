@@ -49,4 +49,13 @@ When you power on the computer, the BIOS is the first code that runs. It initial
 qemu-system-i386 -drive file=boot_sect.bin,format=raw,if=floppy
 ```
 
-### NASM
+## 02-bootsector-print
+
+### Interrupts
+An **interrupt** is a signal that tells the CPU to pause current tasks and run a special routine (Interrupt Service Routine, or ISR).  
+In `02-bootsector-print`, `int 0x10` triggers a BIOS video service to print a character on the screen.
+
+### CPU Registers
+Registers are tiny super-fast storage inside the CPU. In this lesson:  
+- **AH**: Specifies the function code for BIOS (e.g., `0x0E` means "print character").  
+- **AL**: Holds the character to be printed (e.g., `'H'`).  
