@@ -99,3 +99,25 @@ Registers are tiny super-fast storage inside the CPU. In this lesson:
 
 ## 03-bootsector-print
 
+### Memory Offsets
+A **memory offset** is the distance (in bytes) from the start of a segment to a specific location in memory.  
+It tells the CPU *where* within the segment to read or write data.
+
+In `03-bootsector-memory`:
+- We load the `BX` register with an offset value.
+- This offset is combined with the current segment (usually `DS`) to calculate the final physical address.
+
+### Pointers
+A **pointer** is a value that holds a memory address.  
+Instead of storing the actual data, it stores *where* the data is in memory.
+
+In `03-bootsector-memory`:
+- `mov bx, HELLO_MSG` loads `BX` with the offset of the `HELLO_MSG` string.
+- `mov al, [bx]` reads the byte from the memory location pointed to by `BX`.
+
+```asm
+mov bx, HELLO_MSG  ; BX now holds the offset address of the string
+mov al, [bx]       ; Load the first character from HELLO_MSG into AL
+mov ah, 0x0E       ; BIOS "print character" function
+int 0x10           ; Print the character in AL
+···
