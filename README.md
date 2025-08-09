@@ -13,7 +13,7 @@ In this project, NASM is used to **assemble the boot sector source code** writte
 ## 01-bootsector-barebones
 
 ### Boot sector program
-```
+```asm
 ; Infinite loop (e9 fd ff)
 loop:
     jmp loop
@@ -155,7 +155,7 @@ dw 0xAA55        ; boot signature
 ```
 
 #### From absolute memory address
-```
+```asm
 [org 0x7C00]
 mov ah, 0x0e       ; BIOS "print character" function
 mov al, [0x7C1B]   ; load byte from exact memory address (0x7C1B)
@@ -180,4 +180,13 @@ Need to use `xxd -g1 -c16 boot_sect.bin | grep ' 58 '` to get exact memory addre
 - `mov al, 0x2D + 0x7C00` → Works, but manual counting is still required (not flexible).  
 
 ## 04-bootsector-stack
+
+- **BP (Base Pointer)**:  
+  A register that usually holds the *base address* of the stack (the starting point or "bottom").  
+  It’s like a fixed reference point so you can find items in the stack easily.
+
+- **SP (Stack Pointer)**:  
+  A register that holds the *current top address* of the stack.  
+  When you push something onto the stack, SP moves to a lower address (stack grows downward).  
+  When you pop something, SP moves to a higher address.
 
