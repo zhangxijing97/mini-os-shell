@@ -99,25 +99,85 @@ Registers are tiny super-fast storage inside the CPU. In this lesson:
 
 ## 03-bootsector-print
 
-### Memory Offsets
-A **memory offset** is the distance (in bytes) from the start of a segment to a specific location in memory.  
-It tells the CPU *where* within the segment to read or write data.
+###  Programming Conventions
+Although we can technically use General-purpose registers whatever we want, following common conventions makes the code easier to read.
+- AX: Arithmetic / results
+- BX: Base memory address
+- CX: Loop counter
+- DX: I/O or high-order calculations
 
-In `03-bootsector-memory`:
-- We load the `BX` register with an offset value.
-- This offset is combined with the current segment (usually `DS`) to calculate the final physical address.
+### Memory Offsets
+A **memory offset** is how far (in bytes) a location is from the start of a segment.  
+The CPU uses it with the segment address (e.g., `DS`) to find the exact memory location.
 
 ### Pointers
-A **pointer** is a value that holds a memory address.  
-Instead of storing the actual data, it stores *where* the data is in memory.
+A **pointer** stores a memory address, not the actual data.  
 
-In `03-bootsector-memory`:
-- `mov bx, HELLO_MSG` loads `BX` with the offset of the `HELLO_MSG` string.
-- `mov al, [bx]` reads the byte from the memory location pointed to by `BX`.
+### Comparing three ways to display letters
 
+#### Direct character in AL
 ```asm
-mov bx, HELLO_MSG  ; BX now holds the offset address of the string
-mov al, [bx]       ; Load the first character from HELLO_MSG into AL
-mov ah, 0x0E       ; BIOS "print character" function
-int 0x10           ; Print the character in AL
-···
+[org 0x7C00]
+mov ah, 0x0e     ; BIOS "print character" function
+mov al, 'H'      ; put 'H' directly into AL
+int 0x10         ; print 'H'
+jmp $            ; infinite loop
+times 510-($-$$) db 0
+dw 0xAA55        ; boot signature
+```
+
+#### From label (symbolic address)
+```asm
+[org 0x7C00]
+mov ah, 0x0e     ; BIOS "print character" function
+mov al, 'H'      ; put 'H' directly into AL
+int 0x10         ; print 'H'
+
+jmp $            ; infinite loop
+times 510-($-$$) db 0
+dw 0xAA55        ; boot signature
+```
+
+#### Direct character in AL
+```asm
+[org 0x7C00]
+mov ah, 0x0e     ; BIOS "print character" function
+mov al, [msg]    ; load the byte stored at label 'msg'
+int 0x10         ; print the character
+
+jmp $            ; infinite loop
+
+msg:
+    db 'X'       ; store 'X' at label 'msg'
+
+times 510-($-$$) db 0
+dw 0xAA55        ; boot signature
+```
+
+#### From absolute memory address
+```
+[org 0x7C00]
+mov ah, 0x0e       ; BIOS "print character" function
+mov al, [0x7C1B]   ; load byte from exact memory address (0x7C1B)
+int 0x10           ; print the character
+
+jmp $              ; infinite loop
+times 510-($-$$) db 0
+dw 0xAA55          ; boot signature
+```
+Need to use `xxd -g1 -c16 boot_sect.bin | grep ' 58 '` to get exact memory address.
+
+### Without `[org 0x7C00]`
+- `mov al, the_secret` → Loads the **address** of `the_secret` (wrong if you want the value).  
+- `mov al, [the_secret]` → Tries to load the value from `the_secret`, but uses a **wrong base address** (because BIOS loads code at 0x7C00, not 0).  
+- `mov al, the_secret + 0x7C00` → After adding 0x7C00, BX contains the real location of 'X' in RAM, so it fetches 0x58 (the ASCII code for 'X') and prints it.
+- `mov al, 0x2D + 0x7C00` → Loads the value directly from **absolute address** (works but you must manually count the offset every time).  
+
+### With `[org 0x7C00]`
+- `mov al, the_secret` → Still loads the **address** of `the_secret` (not the value).  
+- `mov al, [the_secret]` → ✅ Correct! Loads the value from `the_secret` automatically with the right offset.  
+- `mov al, the_secret + 0x7C00` → ❌ Wrong now, because the offset is already handled by `org` (you’re adding 0x7C00 twice).  
+- `mov al, 0x2D + 0x7C00` → Works, but manual counting is still required (not flexible).  
+
+## 04-bootsector-stack
+
