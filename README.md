@@ -90,7 +90,10 @@ qemu-system-i386 -drive file=boot_sect.bin,format=raw,if=floppy
 
 ### Interrupts
 An **interrupt** is a signal that tells the CPU to pause current tasks and run a special routine (Interrupt Service Routine, or ISR).  
-In `02-bootsector-print`, `int 0x10` triggers a BIOS video service to print a character on the screen.
+- `int 0x10` calls the BIOS **video service** (interrupt number 0x10).
+- `AH` selects which video function to run.
+- `AH=0x0E` means **Teletype Output** – print the character in `AL` and move the cursor.
+- When `int 0x10` runs, it reads `AH` to decide the action, then uses `AL` as input for that action.
 
 ### CPU Registers
 Registers are tiny super-fast storage inside the CPU. In this lesson:  
@@ -181,12 +184,23 @@ Need to use `xxd -g1 -c16 boot_sect.bin | grep ' 58 '` to get exact memory addre
 
 ## 04-bootsector-stack
 
-- **BP (Base Pointer)**:  
+### BP (Base Pointer)
   A register that usually holds the *base address* of the stack (the starting point or "bottom").  
   It’s like a fixed reference point so you can find items in the stack easily.
 
-- **SP (Stack Pointer)**:  
+### SP (Stack Pointer)
   A register that holds the *current top address* of the stack.  
   When you push something onto the stack, SP moves to a lower address (stack grows downward).  
   When you pop something, SP moves to a higher address.
 
+### Pop a character from the stack
+```asm
+pop bx        ; Pop the top 16-bit value from the stack into BX 
+              ; (high byte -> BH, low byte -> BL). 
+              ; Here, BL will contain 0x43 ('C'), BH will be 0x00.
+
+mov al, bl    ; Copy the character from BL into AL 
+              ; (BIOS print function uses AL for the character to print).
+
+int 0x10      ; Call BIOS video interrupt (AH=0x0E) to print the character in AL ('C')
+```
